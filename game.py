@@ -2,8 +2,9 @@ import pygame
 import sys
 import os
 
-# Inicializar Pygame
+# Inicializar Pygame y el mezclador de audio
 pygame.init()
+pygame.mixer.init()
 
 #Configuración de pantalla y colores
 ANCHO = 800
@@ -22,6 +23,26 @@ fuente_titulo = pygame.font.Font(None, 48)
 
 # Carpeta base
 carpeta_base = os.path.dirname(__file__)
+
+# Rutas de audio
+musica_rutas = {
+    "once_upon_a_time": os.path.join(carpeta_base, "audios", "Once-Upon-a-Time.mp3"),
+    "sonic_ending": os.path.join(carpeta_base, "audios", "sonic-the-hedgehog-1-music-ending-theme.mp3"),
+    "sonic_game_over": os.path.join(carpeta_base, "audios", "Sonic-1-Music_-Game-Over.mp3")
+}
+# Sonido de pasos
+sonido_pasos = pygame.mixer.Sound(os.path.join(carpeta_base, "audios", "stone.mp3"))
+
+# Variable para rastrear la música actual
+musica_actual = None
+
+def reproducir_musica(estado):
+    global musica_actual
+    if musica_actual != estado and estado in musica_rutas:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load(musica_rutas[estado])
+        pygame.mixer.music.play(-1)  # -1 para reproducir en bucle
+        musica_actual = estado
 
 # Función para cargar imágenes de manera segura
 def cargar_imagen_segura(ruta, ancho, alto):
@@ -117,6 +138,7 @@ def dibujar_final(mensaje, color):
 
 # Bucle principal
 clock = pygame.time.Clock()
+reproducir_musica("once_upon_a_time")
 
 while True:
     for evento in pygame.event.get():
@@ -135,6 +157,10 @@ while True:
                     estado_juego = "decision"
                 else:
                     estado_juego = "final"
+                    if contador_opcion2 >= 3:
+                        reproducir_musica("sonic_game_over")
+                    else:
+                        reproducir_musica("sonic_ending")
 
         elif estado_juego == "decision":
             if evento.type == pygame.KEYDOWN:
@@ -154,6 +180,7 @@ while True:
                 personaje_x = ANCHO // 2
                 personaje_y = ALTO // 2
                 personaje_actual_img = personaje_img
+                reproducir_musica("once_upon_a_time")
 
     # Movimiento del personaje y cambio de imagen
     if estado_juego in ("jugando", "decision"):
@@ -163,19 +190,23 @@ while True:
         if teclas[pygame.K_LEFT]:
             personaje_x -= velocidad
             personaje_actual_img = personaje_izquierda_img
+            sonido_pasos.play()
         elif teclas[pygame.K_RIGHT]:
             personaje_x += velocidad
             personaje_actual_img = personaje_derecha_img
+            sonido_pasos.play()
         elif teclas[pygame.K_UP]:
             personaje_y -= velocidad
             personaje_actual_img = personaje_atras_img
+            sonido_pasos.play()
         elif teclas[pygame.K_DOWN]:
             personaje_y += velocidad
             personaje_actual_img = personaje_img
-        
+            sonido_pasos.play()
+
         personaje_x = max(0, min(personaje_x, ANCHO - personaje_actual_img.get_width()))
         personaje_y = max(0, min(personaje_y, ALTO - personaje_actual_img.get_height()))
-
+        
     # Dibujado
     if estado_juego == "instrucciones":
         pantalla.blit(imagen_instrucciones, (0, 0))
