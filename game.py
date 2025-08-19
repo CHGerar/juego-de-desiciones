@@ -36,9 +36,15 @@ def cargar_imagen_segura(ruta, ancho, alto):
 
 #Cargar imágenes principales
 ruta_inicio = os.path.join(carpeta_base, "imagenes", "inicio.bmp")
-ruta_personaje = os.path.join(carpeta_base, "imagenes", "personaje.bmp")
+ruta_personaje = os.path.join(carpeta_base, "imagenes", "personaje.png")
+ruta_personaje_derecha = os.path.join(carpeta_base, "imagenes", "personaje_right.png")
+ruta_personaje_atras = os.path.join(carpeta_base, "imagenes", "personaje_back.png")
 imagen_instrucciones = cargar_imagen_segura(ruta_inicio, ANCHO, ALTO)
 personaje_img = cargar_imagen_segura(ruta_personaje, 80, 80)
+personaje_derecha_img = cargar_imagen_segura(ruta_personaje_derecha, 80, 80)
+personaje_atras_img = cargar_imagen_segura(ruta_personaje_atras, 80, 80)
+personaje_izquierda_img = pygame.transform.flip(personaje_derecha_img, True, False) # Invertir la imagen horizontalmente
+personaje_actual_img = personaje_img
 
 # Rutas de imágenes para preguntas
 imagenes_rutas = [
@@ -105,7 +111,6 @@ def dibujar_final(mensaje, color):
     titulo = fuente_titulo.render("FIN DEL JUEGO", True, color)
     texto_final = fuente_dialogo.render(mensaje, True, BLANCO)
     texto_reiniciar = fuente_dialogo.render("Presiona R para reiniciar", True, BLANCO)
-    pantalla.blit
     pantalla.blit(titulo, (ANCHO//2 - titulo.get_width()//2, ALTO//2 - 80))
     pantalla.blit(texto_final, (ANCHO//2 - texto_final.get_width()//2, ALTO//2 + 20))
     pantalla.blit(texto_reiniciar, (ANCHO//2 - texto_reiniciar.get_width()//2, ALTO - 50))
@@ -148,17 +153,28 @@ while True:
                 indice_pregunta = 0
                 personaje_x = ANCHO // 2
                 personaje_y = ALTO // 2
+                personaje_actual_img = personaje_img
 
-    # Movimiento del personaje
+    # Movimiento del personaje y cambio de imagen
     if estado_juego in ("jugando", "decision"):
         teclas = pygame.key.get_pressed()
-        if teclas[pygame.K_LEFT]: personaje_x -= velocidad
-        if teclas[pygame.K_RIGHT]: personaje_x += velocidad
-        if teclas[pygame.K_UP]: personaje_y -= velocidad
-        if teclas[pygame.K_DOWN]: personaje_y += velocidad
-
-        personaje_x = max(0, min(personaje_x, ANCHO - personaje_img.get_width()))
-        personaje_y = max(0, min(personaje_y, ALTO - personaje_img.get_height()))
+        
+        # Mover y cambiar la imagen del personaje
+        if teclas[pygame.K_LEFT]:
+            personaje_x -= velocidad
+            personaje_actual_img = personaje_izquierda_img
+        elif teclas[pygame.K_RIGHT]:
+            personaje_x += velocidad
+            personaje_actual_img = personaje_derecha_img
+        elif teclas[pygame.K_UP]:
+            personaje_y -= velocidad
+            personaje_actual_img = personaje_atras_img
+        elif teclas[pygame.K_DOWN]:
+            personaje_y += velocidad
+            personaje_actual_img = personaje_img
+        
+        personaje_x = max(0, min(personaje_x, ANCHO - personaje_actual_img.get_width()))
+        personaje_y = max(0, min(personaje_y, ALTO - personaje_actual_img.get_height()))
 
     # Dibujado
     if estado_juego == "instrucciones":
@@ -170,7 +186,7 @@ while True:
 
     elif estado_juego == "jugando":
         pantalla.fill(NEGRO)
-        pantalla.blit(personaje_img, (personaje_x, personaje_y))
+        pantalla.blit(personaje_actual_img, (personaje_x, personaje_y))
 
         if indice_pregunta == 0:
             dibujar_dialogo("Bienvenido a la cueva. Usa las flechas para moverte.\nPresiona ESPACIO para avanzar en la historia.")
@@ -182,7 +198,7 @@ while True:
     elif estado_juego == "decision":
         # Se dibuja la imagen de fondo correspondiente a la pregunta
         pantalla.blit(imagenes_preguntas[indice_pregunta], (0, 0))
-        pantalla.blit(personaje_img, (personaje_x, personaje_y))
+        pantalla.blit(personaje_actual_img, (personaje_x, personaje_y))
 
         if indice_pregunta < len(preguntas):
             dibujar_dialogo(preguntas[indice_pregunta])
@@ -191,7 +207,7 @@ while True:
         if indice_pregunta == 2:  # La tercera pregunta
             ruta_gema = os.path.join(carpeta_base, "imagenes", "gemas.png")
             gema_img = cargar_imagen_segura(ruta_gema, 60, 60)
-            pantalla.blit(gema_img, (ANCHO//2 + 150, ALTO//2))  # Ajusta posición si quieres
+            pantalla.blit(gema_img, (ANCHO//2 + 150, ALTO//2)) # Ajusta posición si quieres
 
     elif estado_juego == "final":
         if contador_opcion2 >= 3:
